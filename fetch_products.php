@@ -40,18 +40,18 @@ $total_pages = ceil($total_records / $per_page_record);
 
 $pagination = '';
 if ($page > 1) {
-    $pagination .= "<a class='item' data-page='".($page - 1)."'>Prev</a>";
+    $pagination .= "<a  class='item' data-page='".($page - 1)."'>Prev</a>";
 } else {
     $pagination .= "<a class='item disabled'>Prev</a>";
 }
 
 for ($i = 1; $i <= $total_pages; $i++) {
     $active_class = ($i == $page) ? 'active' : '';
-    $pagination .= "<a class='item $active_class' data-page='$i'>$i</a>";
+    $pagination .= "<a  class='item $active_class' data-page='$i'>$i</a>";
 }
 
 if ($page < $total_pages) {
-    $pagination .= "<a class='item' data-page='".($page + 1)."'>Next</a>";
+    $pagination .= "<a  class='item' data-page='".($page + 1)."'>Next</a>";
 } else {
     $pagination .= "<a class='item disabled'>Next</a>";
 }

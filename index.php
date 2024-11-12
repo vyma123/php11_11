@@ -1,3 +1,4 @@
+<!-- index.php -->
 <?php
 require_once 'includes/db.inc.php';
 require_once './includes/functions.php';
@@ -304,32 +305,34 @@ table thead .date{
 <div id="paginationBox" class="pagination_box">
     <div class="ui pagination menu">
         <?php
-            $query = "SELECT COUNT(*) FROM products";
-            $count_stmt = $pdo->prepare($query);
-            $count_stmt->execute();
-            $total_records = $count_stmt->fetchColumn();
-            $total_pages = ceil($total_records / $per_page_record);
+        $query = "SELECT COUNT(*) FROM products";
+        $count_stmt = $pdo->prepare($query);
+        $count_stmt->execute();
+        $total_records = $count_stmt->fetchColumn();
+        $total_pages = ceil($total_records / $per_page_record);
 
-            if ($page > 1) {
-                echo "<a onclick='prev(event)' class='item' data-page='".($page - 1)."'>Prev</a>";
-            } else {
-                echo "<a class='item '>Prev</a>";
-            }
+        // Previous button
+        if ($page > 1) {
+            echo '<a class="item pagination-link active" data-page="' . ($page - 1) . '">Prev</a>';
+        } else {
+            echo '<a class="item disabled">Prev</a>';
+        }
 
-            for ($i = 1; $i <= $total_pages; $i++) {
-                $active_class = ($i == $page) ? 'active' : '';
-                echo "<a onclick='pagination_number(event)' class='item $active_class' data-page='$i'>$i</a>";
-            }
+        // Pagination number links
+        for ($i = 1; $i <= $total_pages; $i++) {
+            $active_class = ($i == $page) ? 'active' : '';
+            echo '<a class="item pagination-link ' . $active_class . '" data-page="' . $i . '">' . $i . '</a>';
+        }
 
-            if ($page < $total_pages) {
-                echo "<a onclick='next(event)' class='item' data-page='".($page + 1)."'>Next</a>";
-            } else {
-                echo "<a class='item disabled'>Next</a>";
-            }
+        // Next button
+        if ($page < $total_pages) {
+            echo '<a class="item pagination-link" data-page="' . ($page + 1) . '">Next</a>';
+        } else {
+            echo '<a class="item disabled">Next</a>';
+        }
         ?>
     </div>
 </div>
-
 
 
 </section>
@@ -339,31 +342,53 @@ table thead .date{
 
 </script>
 <script>
-$(document).ready(function() {
-    $('#paginationBox').on('click', '.item', function(e) {
+$(document).ready(function () {
+    // Event listener for pagination links
+    $(document).on('click', '.pagination-link', function (e) {
         e.preventDefault();
-        const page = $(this).data('page');
-
-        if (page) {
-            $.ajax({
-                url: 'fetch_products.php',
-                type: 'GET',
-                data: { page: page },
-                dataType: 'json', // Expect JSON response
-                success: function(response) {
-                    // Update product table
-                    $('#productTableBody').html(response.products);
-
-                    // Update pagination links
-                    $('#paginationBox .ui.pagination.menu').html(response.pagination);
-                },
-                error: function(xhr, status, error) {
-                    console.error("Error fetching data: ", error);
-                }
-            });
-        }
+        var page = $(this).data('page');
+        loadPage(page);
     });
+
+    // Event listener for filter button
+    // $('#applyFilters').click(function() {
+    //     loadPage(1); // Reset to the first page on filter change
+    // });
+
+    // Function to load specific page data
+    function loadPage(page) {
+        var search = $('#search').val();
+        var sort_by = $('#sort_by').val();
+        var order = $('#order').val();
+        var category = $('#category').val();
+        var tag = $('#tag').val();
+        var date_from = $('#date_from').val();
+        var date_to = $('#date_to').val();
+        var price_from = $('#price_from').val();
+        var price_to = $('#price_to').val();
+
+        $.ajax({
+            url: 'filter_products.php',
+            type: 'GET',
+            data: {
+                page: page,
+                search: search,
+                sort_by: sort_by,
+                order: order,
+                category: category,
+                tag: tag,
+                date_from: date_from,
+                date_to: date_to,
+                price_from: price_from,
+                price_to: price_to
+            },
+            success: function(response) {
+                $('#productTableBody').html(response);
+            }
+        });
+    }
 });
+
 
 
 </script>

@@ -1,3 +1,4 @@
+<!-- filter_products.php -->
 <?php
 require_once 'includes/db.inc.php';
 require_once 'includes/functions.php';
@@ -153,7 +154,7 @@ if (!empty($category) || !empty($tag) || (!empty($date_from) && !empty($date_to)
 
 // Hiển thị kết quả
 echo "<div class='box_table'>";
-echo "<table id='tableID' class='ui compact celled table'>";
+echo "<table id='productTables' class='ui compact celled table'>";
 echo "
 <thead>
 <tr>
@@ -219,26 +220,72 @@ echo '</div>';
 
         // Previous button
         if ($page > 1) {
-            echo '<a onclick="prev(event)" class="item" data-page="' . ($page - 1) . '">Prev</a>';
+            echo '<a class="item pagination-link active" data-page="' . ($page - 1) . '">Prev</a>';
         } else {
-            echo '<a class="item">Prev</a>';
+            echo '<a class="item disabled">Prev</a>';
         }
 
         // Pagination number links
         for ($i = 1; $i <= $total_pages; $i++) {
             $active_class = ($i == $page) ? 'active' : '';
-            echo '<a onclick="pagination_number(event)" class="item ' . $active_class . '" data-page="' . $i . '">' . $i . '</a>';
+            echo '<a class="item pagination-link ' . $active_class . '" data-page="' . $i . '">' . $i . '</a>';
         }
 
         // Next button
         if ($page < $total_pages) {
-            echo '<a onclick="next(event)" class="item" data-page="' . ($page + 1) . '">Next</a>';
+            echo '<a class="item pagination-link" data-page="' . ($page + 1) . '">Next</a>';
         } else {
             echo '<a class="item disabled">Next</a>';
         }
         ?>
     </div>
 </div>
+
+
+
+<script>
+$(document).ready(function () {
+    // Event listener for pagination links
+    $(document).on('click', '.pagination-link', function (e) {
+        e.preventDefault();
+        var page = $(this).data('page');
+        
+        // Chỉ gọi hàm loadPage khi trang hiện tại thay đổi
+        if (page !== <?php echo $page; ?>) {
+            loadPage(page);
+        }
+    });
+
+    // Function to load specific page data
+    function loadPage(page) {
+        $.ajax({
+            url: 'filter_products.php',
+            type: 'GET',
+            data: {
+                page: page,
+                search: '<?php echo $searchTermLike; ?>',
+                sort_by: '<?php echo $sort_by; ?>',
+                order: '<?php echo $order; ?>',
+                category: '<?php echo $category; ?>',
+                tag: '<?php echo $tag; ?>',
+                date_from: '<?php echo $date_from; ?>',
+                date_to: '<?php echo $date_to; ?>',
+                price_from: '<?php echo $price_from; ?>',
+                price_to: '<?php echo $price_to; ?>'
+            },
+            success: function (response) {
+                $('.box_table').html(response); // Update toàn bộ nội dung box_table để tránh lỗi lọc
+            },
+            error: function () {
+                alert('An error occurred while loading data.');
+            }
+        }); 
+    }
+
+    // Xóa loadPage đầu tiên khi tài liệu tải xong
+});
+</script>
+
 
 
 
