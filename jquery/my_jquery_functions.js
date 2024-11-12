@@ -127,10 +127,10 @@ $(document).on('click', '.edit_button', function() {
 
 
 $(document).on('click', '.edit_button', function() {
-    var productId = $(this).val(); // Get the product ID from the button's value
-    $('#action_type').val('edit_product'); // Set action_type to edit
-    $('#product_id').val(productId); // Set the product ID in the hidden field
-    $('.ui.modal.product_box').modal('show'); // Show the modal
+    var productId = $(this).val(); 
+    $('#action_type').val('edit_product'); 
+    $('#product_id').val(productId); 
+    $('.ui.modal.product_box').modal('show'); 
 });
 
 $('#add_product').click(function() {
@@ -159,7 +159,6 @@ $(document).on('click', '.edit_button', function() {
 });
 
 $('.edit_button').click(function() {
-    // Show the #editProductButton when #add_product is clicked
 
     $('#addProductButton').css({
         'display': 'none',  
@@ -181,8 +180,8 @@ $(document).on('submit', '#saveProduct', function(e){
 	var formData = new FormData(this);
 
 	if ($('#featured_image')[0].files.length > 0) {
-        var file = $('#featured_image')[0].files[0]; // Lấy ảnh đã chọn từ input
-        formData.append('featured_image', file); // Thêm ảnh vào formData
+        var file = $('#featured_image')[0].files[0]; 
+        formData.append('featured_image', file); 
     }
 
 	// if ($('#gallery')[0].files.length > 0) {
@@ -477,7 +476,7 @@ $(document).on('submit', '#saveProperty', function(e){
             $('#input_cate').removeClass('err_border'); 
             $('#input_tag').removeClass('err_border'); 
 
-			console.log(formData); // Log the serialized form data
+			console.log(formData); 
 
             if (res.status == 422) {
 				$('#errMessage').removeClass('d-none').fadeIn(400); 
@@ -523,7 +522,6 @@ $(document).on('submit', '#saveProperty', function(e){
 function prev(event){
 	event.preventDefault();
 
-	// Lấy phần tử section bằng id
 	var section = document.getElementById('box_table');
 
 	section.style.display = "none"; // Ẩn đi
@@ -532,21 +530,15 @@ function prev(event){
 
 function pagination_number(event){
 	event.preventDefault();
-
-	// Lấy phần tử section bằng id
 	var section = document.getElementById('box_table');
-
 	section.style.display = "none"; // Ẩn đi
 }
 
 
 function next(event){
 	event.preventDefault();
-
-	// Lấy phần tử section bằng id
 	var section = document.getElementById('box_table');
-
-	section.style.display = "none"; // Ẩn đi
+	section.style.display = "none"; 
 }
 //pagination
 
@@ -554,12 +546,11 @@ function next(event){
 function applyFilters(event) {
     event.preventDefault();
 
-	 // Lấy phần tử section bằng id
 	 var section = document.getElementById('box_table');
 	 var section2 = document.getElementById('paginationBox');
 
-	 section.style.display = "none"; // Ẩn đi
-	 section2.style.display = "none"; // Ẩn đi
+	 section.style.display = "none";
+	 section2.style.display = "none"; 
 
 	
     const search = document.getElementById("search").value;
@@ -573,9 +564,8 @@ function applyFilters(event) {
     const priceTo = document.getElementById("price_to").value;
     const gallery = document.getElementById("gallery").value;
 
-    // Kiểm tra các giá trị lọc, nếu rỗng thì không gửi tham số tương ứng
     const data = {
-        search: search || '', // Nếu rỗng thì gửi giá trị mặc định
+        search: search || '', 
         sort_by: sortBy,
         order: order,
         category: category,
@@ -590,9 +580,9 @@ function applyFilters(event) {
     $.ajax({
         url: 'filter_products.php',
         type: 'GET',
-        data: data,  // Gửi dữ liệu lọc lên server
+        data: data,  
         success: function(response) {
-            $('#productTableBody').html(response);  // Cập nhật dữ liệu sản phẩm lên giao diện
+            $('#productTableBody').html(response); 
         },
         error: function(error) {
             console.error("Error loading data:", error);
@@ -606,15 +596,13 @@ function applyFilters(event) {
     var charCode = (evt.which) ? evt.which : evt.keyCode;
     var inputValue = evt.target.value;
 
-    // Kiểm tra nếu ký tự không phải là số (48-57) hoặc dấu chấm (46)
     if (charCode > 31 && (charCode < 48 || charCode > 57) && charCode !== 46) {
-        return false;  // Chặn các ký tự không phải là số và dấu chấm
+        return false;  
     }
 
-    // Kiểm tra nếu đã có dấu chấm trong input, nếu có thì không cho phép thêm dấu chấm
     if (charCode === 46 && inputValue.indexOf('.') !== -1) {
-        return false;  // Chặn dấu chấm nếu đã có trong input
+        return false;  
     }
 
-    return true;  // Chỉ cho phép số và một dấu chấm
+    return true;  
 }

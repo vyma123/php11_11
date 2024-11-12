@@ -1,22 +1,44 @@
 <?php
 require_once 'includes/db.inc.php';
+require_once 'includes/functions.php';
+
+$results = select_all_products($pdo);
+
+
+
 
 // Lấy các tham số từ GET, nếu không có thì gán giá trị mặc định
+
+// Tham số phân trang
 $searchTerm = isset($_GET['search']) ? test_input($_GET['search']) : '';
-$sort_by = $_GET['sort_by'] ?? 'id';
-$order = $_GET['order'] ?? 'ASC';
+$per_page_record = 5;  // Số lượng bản ghi mỗi trang
+$page = isset($_GET["page"]) ? $_GET["page"] : 1;
+$page = filter_var($page, FILTER_VALIDATE_INT) !== false ? (int)$page : 1;
+
+$start_from = ($page - 1) * $per_page_record;  // Vị trí bắt đầu
+
+$query = "SELECT * FROM products LIMIT :start_from, :per_page";
+$stmt = $pdo->prepare($query);
+$stmt->bindParam(':start_from', $start_from, PDO::PARAM_INT);
+$stmt->bindParam(':per_page', $per_page_record, PDO::PARAM_INT);
+$stmt->execute();
+$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$allowed_sort_columns = ['id', 'product_name', 'price'];
+$sort_by = isset($_GET['sort_by']) && in_array($_GET['sort_by'], $allowed_sort_columns) ? $_GET['sort_by'] : 'id';
+$allowed_order_directions = ['ASC', 'DESC'];
+$order = isset($_GET['order']) && in_array($_GET['order'], $allowed_order_directions) ? $_GET['order'] : 'ASC';
 $category = $_GET['category'] ?? 0;
 $tag = $_GET['tag'] ?? 0;
-$gallery = $_GET['gallery'] ?? '';  
+$category_page = $_GET['category'] ?? 0;
+$tag_page = $_GET['tag'] ?? 0;
+$tag = $_GET['tag'] ?? 0;
 $date_from = $_GET['date_from'] ?? null;
 $date_to = $_GET['date_to'] ?? null;
 $price_from = $_GET['price_from'] ?? null;
 $price_to = $_GET['price_to'] ?? null;
 
-// Tham số phân trang
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;  // Trang hiện tại
-$limit = 5;  // Số lượng bản ghi mỗi trang
-$offset = ($page - 1) * $limit;  // Vị trí bắt đầu
+
 
 // Bắt đầu xây dựng truy vấn SQL
 $query = "
@@ -63,11 +85,14 @@ if (!empty($price_to)) {
     $query .= " AND products.price <= :price_to";
 }
 
+
 // Sắp xếp kết quả
-$query .= " GROUP BY products.id ORDER BY $sort_by $order";
+$query .= " GROUP BY products.id 
+            ORDER BY $sort_by $order 
+            LIMIT :start_from, :per_page";
 
 // Thêm LIMIT và OFFSET cho phân trang
-$query .= " LIMIT :limit OFFSET :offset";
+// $query .= " LIMIT :limit OFFSET :offset";
 
 // Chuẩn bị và thực thi truy vấn
 $stmt = $pdo->prepare($query);
@@ -83,10 +108,10 @@ if ($tag != 0) {
     $stmt->bindParam(':tag_id', $tag, PDO::PARAM_INT);
 }
 
-if (!empty($gallery)) {
-    $galleryLike = "%$gallery%";
-    $stmt->bindParam(':gallery', $galleryLike, PDO::PARAM_STR);
-}
+// if (!empty($gallery)) {
+//     $galleryLike = "%$gallery%";
+//     $stmt->bindParam(':gallery', $galleryLike, PDO::PARAM_STR);
+// }
 
 if (!empty($date_from)) {
     $stmt->bindParam(':date_from', $date_from);
@@ -105,11 +130,26 @@ if (!empty($price_to)) {
 }
 
 // Bind tham số LIMIT và OFFSET
-$stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-$stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
-
+$stmt->bindParam(':start_from', $start_from, PDO::PARAM_INT);
+$stmt->bindParam(':per_page', $per_page_record, PDO::PARAM_INT);
 $stmt->execute();
 $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+
+
+if (!empty($category) || !empty($tag) || (!empty($date_from) && !empty($date_to)) || (!empty($price_from) && !empty($price_to))) {
+    $total_records = getRecordCount($pdo, $searchTermLike, $category, $tag, $date_from, $date_to, $price_from, $price_to);
+} else {
+    $count_query = "SELECT COUNT(*) FROM products WHERE product_name LIKE :search_term";
+    $count_stmt = $pdo->prepare($count_query);
+    $count_stmt->bindParam(':search_term', $searchTermLike, PDO::PARAM_STR);
+    $count_stmt->execute();
+    $total_records = $count_stmt->fetchColumn();
+}
+
+
+
 
 // Hiển thị kết quả
 echo "<div class='box_table'>";
@@ -169,39 +209,36 @@ echo "</table>";
 
 echo '</div>';
 
-$query = "SELECT COUNT(*) ";
-$count_stmt = $pdo->prepare($query);
-$count_stmt->execute();
-$total_records = $count_stmt->fetchColumn();
-$total_pages = ceil($total_records / $per_page_record);
+?>
 
-echo "
-<div id='paginationBox' class='pagination_box'>
-    <div class='ui pagination menu'>
+
+<div id="paginationBox" class="pagination_box">
+    <div class="ui pagination menu">
         <?php
-   
+        $total_pages = ceil($total_records / $per_page_record);
 
-            if ($page > 1) {
-                echo "<a onclick='prev(event)' class='item' data-page='".($page - 1)."'>Prev</a>";
-            } else {
-                echo "<a class='item '>Prev</a>";
-            }
+        // Previous button
+        if ($page > 1) {
+            echo '<a onclick="prev(event)" class="item" data-page="' . ($page - 1) . '">Prev</a>';
+        } else {
+            echo '<a class="item">Prev</a>';
+        }
 
-            for ($i = 1; $i <= $total_pages; $i++) {
-                $active_class = ($i == $page) ? 'active' : '';
-                echo "<a onclick='pagination_number(event)' class='item $active_class' data-page='$i'>$i</a>";
-            }
+        // Pagination number links
+        for ($i = 1; $i <= $total_pages; $i++) {
+            $active_class = ($i == $page) ? 'active' : '';
+            echo '<a onclick="pagination_number(event)" class="item ' . $active_class . '" data-page="' . $i . '">' . $i . '</a>';
+        }
 
-            if ($page < $total_pages) {
-                echo "<a onclick='next(event)' class='item' data-page='".($page + 1)."'>Next</a>";
-            } else {
-                echo "<a class='item disabled'>Next</a>";
-            }
+        // Next button
+        if ($page < $total_pages) {
+            echo '<a onclick="next(event)" class="item" data-page="' . ($page + 1) . '">Next</a>';
+        } else {
+            echo '<a class="item disabled">Next</a>';
+        }
         ?>
     </div>
 </div>
-"
-?>
 
 
 
